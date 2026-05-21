@@ -115,7 +115,6 @@ public class SecurityConfig {
                         .requestMatchers("/auth/login", "/auth/jwks").permitAll()
                         .requestMatchers(HttpMethod.POST, "/appusers").permitAll()
                         .requestMatchers(HttpMethod.GET, "/appusers").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/appusers").hasRole("ADMIN")
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable);
