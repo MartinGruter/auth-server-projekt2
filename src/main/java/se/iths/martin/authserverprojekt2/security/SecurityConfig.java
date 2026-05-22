@@ -114,7 +114,7 @@ public class SecurityConfig {
         httpSecurity.authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/auth/login", "/auth/jwks").permitAll()
                         .requestMatchers(HttpMethod.POST, "/appusers").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/appusers").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/appusers/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable);
