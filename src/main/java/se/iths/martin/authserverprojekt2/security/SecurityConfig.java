@@ -21,11 +21,12 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import se.iths.martin.authserverprojekt2.exception.UserNotFoundException;
 import se.iths.martin.authserverprojekt2.model.AppUser;
 import se.iths.martin.authserverprojekt2.repository.AppUserRepository;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -41,41 +42,43 @@ import java.util.Base64;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final String jwtPublicKey;
-    private final String jwtPrivateKey;
+    private final String publicKeyPath;
+    private final String privateKeyPath;
     private final String jwtKeyId;
 
     public SecurityConfig(
             @Value("${app.jwt.public-key:}") String jwtPublicKey,
-            @Value("${app.jwt.private-key:}") String jwtPrivateKey,
+            @Value("${app.jwt.private-key:}") String privateKeyPath,
             @Value("${app.jwt.key-id}") String jwtKeyId
     ) {
-        this.jwtPublicKey = jwtPublicKey;
-        this.jwtPrivateKey = jwtPrivateKey;
+        this.publicKeyPath = jwtPublicKey;
+        this.privateKeyPath = privateKeyPath;
         this.jwtKeyId = jwtKeyId;
     }
 
     @Bean
     public KeyPair keyPair() throws Exception {
-        if (StringUtils.hasText(jwtPrivateKey) && StringUtils.hasText(jwtPublicKey)) {
-            String cleanPrivateKey = jwtPrivateKey
-                    .trim()
-                    .replace("\\n", "")
-                    .replaceAll("\\s", "");
-            String cleanPublicKey = jwtPublicKey
-                    .trim()
-                    .replace("\\n", "")
-                    .replaceAll("\\s", "");
-            byte[] privateBytes =
-                    Base64.getDecoder().decode(cleanPrivateKey);
-            byte[] publicBytes =
-                    Base64.getDecoder().decode(cleanPublicKey);
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            PrivateKey privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(privateBytes));
-            PublicKey publicKey = keyFactory.generatePublic(new X509EncodedKeySpec(publicBytes));
-            return new KeyPair(publicKey, privateKey);
-        }
-        throw new IllegalArgumentException("Private or public key is missing.");
+        String privatePem = new String(Files.readAllBytes(Paths.get(privateKeyPath)));
+        String cleanPrivateKey = privatePem
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replaceAll("\s+", "");
+
+        // Read public key from file
+        String publicPem = new String(Files.readAllBytes(Paths.get(publicKeyPath)));
+        String cleanPublicKey = publicPem
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
+                .replaceAll("\s+", "");
+
+        byte[] privateBytes =
+                Base64.getDecoder().decode(cleanPrivateKey);
+        byte[] publicBytes =
+                Base64.getDecoder().decode(cleanPublicKey);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        PrivateKey privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(privateBytes));
+        PublicKey publicKey = keyFactory.generatePublic(new X509EncodedKeySpec(publicBytes));
+        return new KeyPair(publicKey, privateKey);
     }
 
     @Bean
