@@ -62,15 +62,12 @@ public class SecurityConfig {
                     .trim()
                     .replace("\\n", "")
                     .replaceAll("\\s", "");
-
             String cleanPublicKey = jwtPublicKey
                     .trim()
                     .replace("\\n", "")
                     .replaceAll("\\s", "");
-
             byte[] privateBytes =
                     Base64.getDecoder().decode(cleanPrivateKey);
-
             byte[] publicBytes =
                     Base64.getDecoder().decode(cleanPublicKey);
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
