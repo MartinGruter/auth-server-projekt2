@@ -58,8 +58,21 @@ public class SecurityConfig {
     @Bean
     public KeyPair keyPair() throws Exception {
         if (StringUtils.hasText(jwtPrivateKey) && StringUtils.hasText(jwtPublicKey)) {
-            byte[] privateBytes = Base64.getDecoder().decode(jwtPrivateKey);
-            byte[] publicBytes = Base64.getDecoder().decode(jwtPublicKey);
+            String cleanPrivateKey = jwtPrivateKey
+                    .trim()
+                    .replace("\\n", "")
+                    .replaceAll("\\s", "");
+
+            String cleanPublicKey = jwtPublicKey
+                    .trim()
+                    .replace("\\n", "")
+                    .replaceAll("\\s", "");
+
+            byte[] privateBytes =
+                    Base64.getDecoder().decode(cleanPrivateKey);
+
+            byte[] publicBytes =
+                    Base64.getDecoder().decode(cleanPublicKey);
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             PrivateKey privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(privateBytes));
             PublicKey publicKey = keyFactory.generatePublic(new X509EncodedKeySpec(publicBytes));
