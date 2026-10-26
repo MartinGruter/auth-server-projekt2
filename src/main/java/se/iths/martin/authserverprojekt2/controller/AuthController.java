@@ -4,8 +4,11 @@ package se.iths.martin.authserverprojekt2.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import se.iths.martin.authserverprojekt2.dto.AppUserRequestDto;
+import se.iths.martin.authserverprojekt2.dto.MeResponseDto;
 import se.iths.martin.authserverprojekt2.dto.TokenResponseDto;
 import se.iths.martin.authserverprojekt2.service.AuthService;
 
@@ -27,5 +30,11 @@ public class AuthController {
     @GetMapping("/jwks")
     public ResponseEntity<Map<String, Object>> publicJwks() {
         return ResponseEntity.ok(authService.publicJwkSet());
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<MeResponseDto> me(@AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(
+                new MeResponseDto(jwt.getSubject(), jwt.getClaimAsStringList("roles")));
     }
 }
