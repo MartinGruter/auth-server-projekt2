@@ -65,6 +65,13 @@ public class SecurityConfig {
         this.jwtKeyId = jwtKeyId;
     }
 
+    /**
+     * Skapar ett keyPair från miljövariablerna JWT_PUBLIC_KEY och JWT_PRIVATE_KEY
+     * som anvönds för att signera token
+     *
+     * @return keyPair från nycklarna
+     * @throws Exception om private key eller public key saknas
+     */
     @Bean
     public KeyPair keyPair() throws Exception {
         if (StringUtils.hasText(jwtPrivateKey) && StringUtils.hasText(jwtPublicKey)) {
@@ -88,6 +95,12 @@ public class SecurityConfig {
         throw new IllegalArgumentException("Private or public key is missing.");
     }
 
+    /**
+     * Skapar en JWKSource från keyPair där rsaKey krypterar keyPair
+     *
+     * @param keyPair den publika och privata nyckeln
+     * @return en immutableJWKSet som inte går att ändra efter den skapats
+     */
     @Bean
     public JWKSource<SecurityContext> jwkSource(KeyPair keyPair) {
         RSAKey rsaKey = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic())
@@ -97,16 +110,36 @@ public class SecurityConfig {
         return new ImmutableJWKSet<>(new JWKSet(rsaKey));
     }
 
+    /**
+     * Metoden skapar den JwtEncoder som auth-servern använder för att skapa och
+     * signera JWT-tokens vid inloggning.
+     *
+     * @param jwkSource källan till att signera nyckeln
+     * @return en JwtEncoder som signerar token med konfigurerad nyckel
+     */
     @Bean
     public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
         return new NimbusJwtEncoder(jwkSource);
     }
 
+    /**
+     * Skapar JwtDecoder som verifierar JWTs med hjälp av RSA public key
+     *
+     * @param keyPair som används för verifiering
+     * @return en JwtDecoder som validerar token signatur och expiry
+     */
     @Bean
     public JwtDecoder jwtDecoder(KeyPair keyPair) {
         return NimbusJwtDecoder.withPublicKey((RSAPublicKey) keyPair.getPublic()).build();
     }
 
+    /**
+     * Verifierar en users credentials under login
+     *
+     * @param authenticationConfiguration Spring Securites authentication konfiguration
+     * @return den konfigurerade AuthenticationManager
+     * @throws Exception om manager inte kan bli skapad
+     */
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration authenticationConfiguration
@@ -114,11 +147,23 @@ public class SecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
+    /**
+     * Skapar en PasswordEncoder som hashar lösenord med BCrypt
+     *
+     * @return en BCrypt med PasswordEncoder
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Definierar hur Spring Security laddar en användare under login
+     * genom att söka upp användare i databasen
+     *
+     * @param appUserRepository repository som hittar användare med username
+     * @return en UserDetailsService som returnerar användares username, hashade password och role
+     */
     @Bean
     public UserDetailsService userDetailsService(AppUserRepository appUserRepository) {
         return username -> {
@@ -132,6 +177,13 @@ public class SecurityConfig {
         };
     }
 
+    /**
+     * Konfigurerar security regler för alla endpoints
+     *
+     * @param httpSecurity som vi får av Spring Security
+     * @return den konfigurerade SecurityFilterChain
+     * @throws Exception om security konfigurationen inte kan byggas
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
@@ -147,6 +199,11 @@ public class SecurityConfig {
         return httpSecurity.build();
     }
 
+    /**
+     * Konfigurerar CORS så att den tillåter frontend att kalla på servern
+     *
+     * @return CORS konfigurationen appliceras till alla paths
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

@@ -43,6 +43,12 @@ public class AuthService {
         this.jwtKeyId = jwtKeyId;
     }
 
+    /**
+     * Authentiserar användare och ger en signad JWT som innehåller username och roles
+     *
+     * @param appUserRequestDto username och password som ska authentiseras
+     * @return accessToken, expiry, username och roles
+     */
     public TokenResponseDto login(AppUserRequestDto appUserRequestDto) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -77,6 +83,12 @@ public class AuthService {
         );
     }
 
+    /**
+     * Skapar JSON Web Key Set som innehåller publika RSA-nyckeln så att andra services kan
+     * verifiera token
+     *
+     * @return JWK set som ett JSON object
+     */
     public Map<String, Object> publicJwkSet() {
         RSAKey rsaKey = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic())
                 .keyID(jwtKeyId)
